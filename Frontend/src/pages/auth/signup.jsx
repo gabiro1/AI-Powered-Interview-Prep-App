@@ -16,8 +16,10 @@ const Signup = ({ setCurrentPage }) => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [profilePic, setProfilePic] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   const { updateUser } = useContext(UserContext);
+  const navigate = useNavigate();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -53,12 +55,23 @@ const Signup = ({ setCurrentPage }) => {
     // signup API logic goes here
     try {
       console.log("Signing up with:", { fullName, email, password });
-      // TODO: Call signup API and handle image upload if needed
+      
+      // Handle image upload if profile picture is selected
       if(profilePic){
-        const imgUploadRes = await uploadImage(profilePic);
-        profileImageUrl = imgUploadRes.imageUrl || ""; 
+        try {
+          console.log("Uploading image:", profilePic.name);
+          const imgUploadRes = await uploadImage(profilePic);
+          profileImageUrl = imgUploadRes.imageUrl || ""; 
+          console.log("Image uploaded successfully:", profileImageUrl);
+        } catch (uploadError) {
+          console.error("Image upload error:", uploadError);
+          // Continue with signup even if image upload fails
+          setError("Image upload failed, but you can continue with signup.");
+          return; // Don't proceed with signup if image upload fails
+        }
       }
 
+      console.log("Making API call to:", `${BASE_URL}${API_PATHS.AUTH.REGISTER}`);
       const response = await axiosInstance.post(API_PATHS.AUTH.REGISTER, {
         name: fullName,
         email,
@@ -66,6 +79,7 @@ const Signup = ({ setCurrentPage }) => {
         profileImageUrl,
       });
 
+      console.log("Signup response:", response.data);
       const { token } = response.data;
       if (token) {
         localStorage.setItem("token", token);
@@ -74,9 +88,17 @@ const Signup = ({ setCurrentPage }) => {
       }
 
     } catch (error) {
-      if (error.response && error.response.data.message) {
+      console.error("Signup error details:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        config: error.config
+      });
+      
+      if (error.response && error.response.data && error.response.data.message) {
         setError(error.response.data.message || "Signup failed. Please try again.");
       } else {
+        console.error("Signup error:", error);
         setError("An unexpected error occurred. Please try again.");
       }
     }
@@ -97,7 +119,12 @@ const Signup = ({ setCurrentPage }) => {
       {error && <p className="text-red-500 text-xs mb-3">{error}</p>}
 
       <form onSubmit={handleSignup} className="flex flex-col gap-4">
-        <ProfilePhotoSelector image={profilePic} setImage={setProfilePic} />
+        <ProfilePhotoSelector 
+          image={profilePic} 
+          setImage={setProfilePic} 
+          preview={imagePreview}
+          setPreview={setImagePreview}
+        />
 
         <input
           type="text"

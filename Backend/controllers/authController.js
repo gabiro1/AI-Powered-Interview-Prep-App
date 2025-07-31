@@ -11,11 +11,13 @@ const generateToken = (userId) =>{
 
 const registerUser = async(req,res)=>{
     try {
+        console.log("Registration attempt received:", { name: req.body.name, email: req.body.email });
         const { name, email, password, profileImageUrl } = req.body;
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
+            console.log("User already exists:", email);
             return res.status(400).json({ message: "User already exists" });
         }
 
@@ -31,6 +33,7 @@ const registerUser = async(req,res)=>{
             profileImageUrl
         });
 
+        console.log("User created successfully:", email);
         res.status(201).json({
             _id: user._id,
             name: user.name,
@@ -40,6 +43,7 @@ const registerUser = async(req,res)=>{
         });
         
     } catch (error) {
+        console.error("Registration error:", error);
         res.status(500).json({ message: "Server error", error: error.message });
     }
 

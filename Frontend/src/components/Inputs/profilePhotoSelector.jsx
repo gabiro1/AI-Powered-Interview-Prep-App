@@ -8,8 +8,10 @@ const ProfilePhotoSelector = ({ image, setImage, preview, setPreview }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      console.log("Image selected:", file.name, file.type, file.size);
       setImage(file);
       const preview = URL.createObjectURL(file);
+      console.log("Preview URL created:", preview);
       if (setPreview) setPreview(preview);
       setPreviewURL(preview);
     }
@@ -53,6 +55,8 @@ const ProfilePhotoSelector = ({ image, setImage, preview, setPreview }) => {
             src={preview || previewURL}
             alt='profile picture'
             className='w-20 h-20 rounded-full object-cover'
+            onLoad={() => console.log("Image loaded successfully")}
+            onError={(e) => console.error("Image failed to load:", e.target.src)}
           />
           <button
             type='button'
