@@ -11,7 +11,7 @@ const Input = ({ value, onChange, label, placeholder, type }) => {
   return (
     <div className="mb-4">
       <label className="text-[13px] text-slate-800">{label}</label>
-      <div className="input-box flex items-center border px-3 py-2 rounded">
+      <div className="input-box flex items-center border px-3  rounded">
         <input
           type={
             type === "password" ? (showPassword ? "text" : "password") : type

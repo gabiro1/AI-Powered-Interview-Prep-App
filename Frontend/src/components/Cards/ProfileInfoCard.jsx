@@ -13,6 +13,7 @@ const ProfileInfoCard = () => {
         navigate("/");
     }
   return (
+    user && (
     <div className='flex items-center '>
         <img 
         src={user.profileImageUrl} 
@@ -31,7 +32,8 @@ const ProfileInfoCard = () => {
             </button>
         </div>
     </div>
-  )
+    )
+  );
 }
 
 export default ProfileInfoCard
