@@ -10,36 +10,46 @@ const axiosInstance = axios.create({
   },
 });
 
+// Request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem("token");
     if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`; // Attach JWT token to request headers
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
     return config;
   },
   (error) => {
+    console.error("Request error:", error);
     return Promise.reject(error);
   }
 );
 
+// Response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
     if (error.response) {
-      if (error.response.status === 401) {
-        // Handle unauthorized access, e.g., redirect to login
-        window.location.href = "/"; // Redirect to login page
-      } else if (error.response.status === 500) {
-        console.error(
-          "Server error:",
-          error.response.data.message || "Internal Server Error "
-        );
+      const status = error.response.status;
+      const serverMessage = error.response.data?.message || "";
+
+      switch (status) {
+        case 401:
+          console.warn("Unauthorized! Redirecting to login.");
+          window.location.href = "/";
+          break;
+        case 500:
+          console.error("Server error: ", serverMessage || "Internal Server Error");
+          break;
+        default:
+          console.warn(`Error ${status}:`, serverMessage);
       }
     } else if (error.code === "ECONNABORTED") {
       console.error("Request timed out. Please try again later.");
+    } else {
+      console.error("Unexpected error:", error.message);
     }
 
     return Promise.reject(error);
