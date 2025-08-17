@@ -23,7 +23,7 @@ const InterviewPreps = () => {
   const [errorMsg, setErrorMsg] = useState("");
 
   const [openLeanMoreDrawer, setOpenLeanMoreDrawer] = useState(false);
-  const [explaination, setExplanation] = useState("");
+  const [explanation, setExplanation] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdateLoader, setIsUpdateLoader] = useState(false);
@@ -36,7 +36,11 @@ const InterviewPreps = () => {
       );
 
       if (response.data && response.data.session) {
+        console.log("Session data loaded:", response.data.session);
+        console.log("Questions count:", response.data.session.questions?.length);
         setSessionData(response.data.session);
+      } else {
+        console.log("No session data in response:", response.data);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -58,6 +62,7 @@ const InterviewPreps = () => {
       );
 
       if(response.data){
+        console.log("AI Response:", response.data);
         setExplanation(response.data)
       }
     } catch (error) {
@@ -116,9 +121,9 @@ const InterviewPreps = () => {
       }
     }catch(error){
       if(error.response && error.response.data.message){
-        setError(error.response.data.message)
+        setErrorMsg(error.response.data.message)
       }else{
-        setError("Something went wrong. Please try again")
+        setErrorMsg("Something went wrong. Please try again")
       }
     }finally{
       setIsUpdateLoader(false);
@@ -154,6 +159,14 @@ const InterviewPreps = () => {
 
       <div className="container mx-auto pt-4 pb-4 px-4  md:px-0">
         <h2 className="text-lg font-semibold color-black"> Interview Q & A</h2>
+        
+        {/* Debug Info */}
+        <div className="mb-4 p-3 bg-gray-100 rounded text-xs">
+          <p><strong>Debug Info:</strong></p>
+          <p>Session Data: {sessionData ? 'Loaded' : 'Not loaded'}</p>
+          <p>Questions Count: {sessionData?.questions?.length || 0}</p>
+          <p>Session ID: {sessionId}</p>
+        </div>
         <div className="grid grid-cols-12 gap-4 mt-5 mb-10">
           <div
             className={`col-span-12 ${
@@ -161,7 +174,9 @@ const InterviewPreps = () => {
             }`}
           >
             <AnimatePresence>
-              {sessionData?.questions?.map((data, index) => (
+              {sessionData ? (
+                sessionData.questions && sessionData.questions.length > 0 ? (
+                  sessionData.questions.map((data, index) => (
                 <motion.div
                   key={data._id || index}
                   initial={{ opacity: 0, y: -20 }}
@@ -192,7 +207,7 @@ const InterviewPreps = () => {
                   
                   {
                     !isLoading && 
-                    sessionData?.question?.length == index + 1 && (
+                    sessionData?.questions?.length == index + 1 && (
                       <div className=" flex items-center justify-center mt-5">
                         <button 
                         className="flex items-center gap-3 text-sm text-center font-medium bg-black px-5 py-2 mr-2 rounded text-nowrap cursor-pointer"
@@ -211,7 +226,19 @@ const InterviewPreps = () => {
                   }
                   </>
                 </motion.div>
-              ))}
+              ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No questions found in this session.</p>
+                    <p className="text-sm text-gray-400 mt-2">Try creating a new session or adding questions.</p>
+                  </div>
+                )
+              ) : (
+                <div className="text-center py-8">
+                  <SpinnerLoader />
+                  <p className="text-gray-500 mt-4">Loading session data...</p>
+                </div>
+              )}
             </AnimatePresence>
           </div>
         </div>
@@ -220,7 +247,7 @@ const InterviewPreps = () => {
           <Drawer
             isOpen={openLeanMoreDrawer}
             onClose={()=>setOpenLeanMoreDrawer(false)}
-            title={!isLoading && explaination?.title}
+            title={!isLoading && explanation?.title}
           >
             {errorMsg &&(
               <p className="flex gap-2 text-sm text-amber-600 font-medium ">
@@ -229,8 +256,18 @@ const InterviewPreps = () => {
             )}
             {isLoading && <SkeletonLoader />}
             {
-              !isLoading && explaination && (
-                <AIResponsePreview content={explaination?.explaination}/>
+              !isLoading && explanation && (
+                <div>
+                  <AIResponsePreview content={explanation?.explanation || explanation?.raw || explanation}/>
+                  {!explanation?.explanation && !explanation?.raw && (
+                    <div className="text-gray-600">
+                      <p>Debug: Raw explanation data:</p>
+                      <pre className="bg-gray-100 p-2 rounded text-xs overflow-auto">
+                        {JSON.stringify(explanation, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
               )
             }
           </Drawer>
